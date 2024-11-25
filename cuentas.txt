@@ -1,0 +1,4 @@
+jason,10001,admin,10000,true
+María,654321,abcd,5000,false
+Carlos,987654,qwerty,2000,false
+admin,1457953,admin,1000000,true
