@@ -1,34 +1,31 @@
 
+import java.awt.Color;
 import java.awt.Font;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.Socket;
 import java.util.ArrayList;
 import javax.swing.*;
 
 public class ATM extends JFrame {
+
     private Banco banco;
     private Usuario usuario;
-    Logger logger;
-    private static PrintWriter out;
+    static LoggerServer logger;
+    static PrintWriter outputSocket;
     ArrayList<Usuario> cuentas;
     private JLabel saldoLabel;
     JButton b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, be, bd;
     JTextField input;
     JTextArea atm_area;
+    private static int PORT = 8001;
+    private static String HOST = "localhost";
 
     public ATM(Banco banco, Usuario usuario) {
 
         this.banco = banco;
         this.usuario = usuario;
-
-        // components
         initComponentsATM();
-        // controles
         pathControl();
-
     }
 
     private void abrirVentanaAdministrador() {
@@ -38,7 +35,9 @@ public class ATM extends JFrame {
 
     private void mostrarSaldo() {
         saldoLabel.setText("Saldo: $" + usuario.getSaldo());
-        // atm_area.append("Saldo $ " + usuario.getSaldo() + "\n");
+        atm_area.append("Saldo $ " + usuario.getSaldo() + "\n");
+        SocketManager.sendMessage("Mostrar saldo "+usuario.getSaldo()+" "+usuario.getNombre());
+
     }
 
     private void realizarDeposito() {
@@ -46,24 +45,24 @@ public class ATM extends JFrame {
         String deposito_string = input.getText().trim();
 
         if (input.getText().isEmpty()) {
-
             System.out.println("Monto para deposito en blanco");
             JOptionPane.showMessageDialog(this, "Monto para deposito en blanco");
-
         } else {
+            try {
+                if (deposito_string != null) {
 
-            if (deposito_string != null) {
+                    double monto = Double.parseDouble(deposito_string);
+                    usuario.setSaldo(usuario.getSaldo() + monto);
+                    mostrarSaldo();
+                    atm_area.append("Deposito Realizado $" + deposito_string + "\n");
+                    SocketManager.sendMessage("Deposito Realizado $" + deposito_string);
 
-                double monto = Double.parseDouble(deposito_string);
-                usuario.setSaldo(usuario.getSaldo() + monto);
-                mostrarSaldo();
-
-                atm_area.append("Deposito Realizado $" + deposito_string + "\n");
-                String message = "Deposito Realizado $" + deposito_string;
-                logger.status(message, usuario);
-                ;
-
+                }
+            } catch (NumberFormatException e) {
+                System.out.println(e);
+                JOptionPane.showMessageDialog(this, "Por favor, introduce un monto válido.");
             }
+
         }
     }
 
@@ -74,22 +73,28 @@ public class ATM extends JFrame {
 
             System.out.println("Prompt vacio");
             JOptionPane.showMessageDialog(this, "Monto de retiro en blanco");
+            SocketManager.sendMessage("Monto de retiro en blanco");
 
         } else {
 
-            if (input != null) {
+            try {
+                if (input != null) {
 
-                double monto = Double.parseDouble(retiro_string);
-                if (usuario.getSaldo() >= monto) {
-                    usuario.setSaldo(usuario.getSaldo() - monto);
-                    mostrarSaldo();
-                    JOptionPane.showMessageDialog(this, "Retiro de fondos ha sido un exito\n"+"Retiro de $"+monto);
+                    double monto = Double.parseDouble(retiro_string);
+                    if (usuario.getSaldo() >= monto) {
+                        usuario.setSaldo(usuario.getSaldo() - monto);
+                        mostrarSaldo();
+                        JOptionPane.showMessageDialog(this,
+                                "Retiro de fondos ha sido un exito\n" + "Retiro de $" + monto);
 
-                } else {
-                    JOptionPane.showMessageDialog(this, "Fondos insuficientes.");
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Fondos insuficientes.");
+                    }
                 }
-
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Por favor, introduce un monto válido.");
             }
+
         }
     }
 
@@ -101,7 +106,7 @@ public class ATM extends JFrame {
         setLayout(null);
         setResizable(false);
         setLocationRelativeTo(null);
-        // getContentPane().setBackground(Color.black);
+        getContentPane().setBackground(Color.black);
 
         /* Menu del navbar */
 
@@ -267,6 +272,7 @@ public class ATM extends JFrame {
 
             if (usuario.getNombre().equals(user_login) && usuario.getContraseña().equals(contraseña)) {
                 System.out.println("Existo! Login");
+                SocketManager.sendMessage("Bienvenido "+usuario.getNombre());   
                 return usuario;
             }
         }
@@ -274,46 +280,33 @@ public class ATM extends JFrame {
     }
 
 
-    // Método para iniciar conexión con el servidor
-    private void init_socket_cliente() {
-        int PORT = 8001;
-        String HOST = "localhost";
-
+    public static void main(String[] args) {
         try {
-            Socket socket = new Socket(HOST, PORT);
-            out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-            // Hilo para recibir respuestas del servidor
+            SocketManager.connect(HOST, PORT); // conexion con el soket
             new Thread(() -> {
-                String response;
                 try {
-                    while ((response = in.readLine()) != null) {
-                        System.out.println("[SERVER]: " + response);
+                    String response;
+                    while ((response = SocketManager.getInputSocket().readLine()) != null) {
+                        System.out.println("[Server]: " + response);
                     }
                 } catch (IOException e) {
-                    System.err.println("Error de comunicación con el servidor.");
-                    e.printStackTrace();
+                    System.err.println("Error al leer mensajes del servidor: " + e.getMessage());
+                    JOptionPane.showMessageDialog(null,
+                            "Erro de comunicacion con el servidor " + HOST + ":" + PORT + "\n" + e);
                 }
             }).start();
-
-            System.out.println("CLIENTE IS RUNNING....");
+            
+            // instancias 
+            Banco banco = new Banco();
+            banco.cargarCuentasDesdeArchivo("cuentas.txt"); // cuentas desde un archivo
+            new LoginWindow(banco).setVisible(true);
 
         } catch (IOException e) {
             System.err.println("No se pudo conectar al servidor en " + HOST + ":" + PORT);
+            JOptionPane.showMessageDialog(null, "No se pudo conectar al servidor en " + HOST + ":" + PORT + "\n" + e);
             e.printStackTrace();
         }
+
     }
-    
-
-    public static void main(String[] args) {
-
-        Banco banco = new Banco();
-        banco.cargarCuentasDesdeArchivo("cuentas.txt"); // cuentas desde un archivo
-
-        new ATM(banco, banco.iniciarSesion("jason", "admin")).setVisible(true);
-        // new LoginWindow(banco).setVisible(true);
-        // new AdminWindow(banco).setVisible(true);
-    }
-
 }
