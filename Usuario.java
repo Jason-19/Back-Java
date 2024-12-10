@@ -1,7 +1,11 @@
 /*
- * Jason nuñez
+ * Autor Jaosn nuñez
+ * 4-866-1408
+ * Programacion V
+ * Proyecto Finel 
+ * Banco con socket
+ * 10/12/2024
  */
-
 public class Usuario {
     private String nombre;
     private String numeroCuenta;

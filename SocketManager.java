@@ -1,5 +1,12 @@
 // administrador de los sockets para la enviar y recbir inforamcio globalmente 
-
+/*
+ * Autor Jaosn nuñez
+ * 4-866-1408
+ * Programacion V
+ * Proyecto Finel 
+ * Banco con socket
+ * 10/12/2024
+ */
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

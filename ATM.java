@@ -1,3 +1,11 @@
+/*
+ * Autor Jaosn nuñez
+ * 4-866-1408
+ * Programacion V
+ * Proyecto Finel 
+ * Banco con socket
+ * 10/12/2024
+ */
 
 import java.awt.Color;
 import java.awt.Font;
@@ -36,7 +44,7 @@ public class ATM extends JFrame {
     private void mostrarSaldo() {
         saldoLabel.setText("Saldo: $" + usuario.getSaldo());
         atm_area.append("Saldo $ " + usuario.getSaldo() + "\n");
-        SocketManager.sendMessage("Mostrar saldo "+usuario.getSaldo()+" "+usuario.getNombre());
+        SocketManager.sendMessage("Mostrar saldo " + usuario.getSaldo() + " " + usuario.getNombre());
 
     }
 
@@ -73,7 +81,7 @@ public class ATM extends JFrame {
 
             System.out.println("Prompt vacio");
             JOptionPane.showMessageDialog(this, "Monto de retiro en blanco");
-            SocketManager.sendMessage("Monto de retiro en blanco");
+            SocketManager.sendMessage(usuario.getNombre() + " Monto de retiro en blanco");
 
         } else {
 
@@ -86,9 +94,11 @@ public class ATM extends JFrame {
                         mostrarSaldo();
                         JOptionPane.showMessageDialog(this,
                                 "Retiro de fondos ha sido un exito\n" + "Retiro de $" + monto);
+                        SocketManager.sendMessage("Retiro de fondos has sido un exito " + monto);
 
                     } else {
                         JOptionPane.showMessageDialog(this, "Fondos insuficientes.");
+                        SocketManager.sendMessage("Fondos insuficientes para hacer el Retiro");
                     }
                 }
             } catch (NumberFormatException e) {
@@ -106,7 +116,7 @@ public class ATM extends JFrame {
         setLayout(null);
         setResizable(false);
         setLocationRelativeTo(null);
-        getContentPane().setBackground(Color.black);
+        getContentPane().setBackground(Color.red);
 
         /* Menu del navbar */
 
@@ -120,8 +130,8 @@ public class ATM extends JFrame {
         setJMenuBar(menuBar);
 
         /* Ventena princopal del ATM */
-        JLabel lblUsuario = new JLabel("Usuario: " + usuario.getNombre());
-        lblUsuario.setBounds(620, 20, 200, 30);
+        JLabel lblUsuario = new JLabel("Bienvenido " + usuario.getNombre());
+        lblUsuario.setBounds(400, 20, 200, 30);
         lblUsuario.setFont(new Font("Times new roman", Font.BOLD, 20));
         add(lblUsuario);
 
@@ -248,42 +258,23 @@ public class ATM extends JFrame {
         // });
     }
 
-    /* Controlde botones activos */
-    void EnableButton(boolean is_enable) {
-
-        b0.setEnabled(is_enable);
-        b1.setEnabled(is_enable);
-        b2.setEnabled(is_enable);
-        b3.setEnabled(is_enable);
-        b4.setEnabled(is_enable);
-        b5.setEnabled(is_enable);
-        b6.setEnabled(is_enable);
-        b7.setEnabled(is_enable);
-        b8.setEnabled(is_enable);
-        b9.setEnabled(is_enable);
-        be.setEnabled(is_enable);
-        bd.setEnabled(is_enable);
-        // field
-        input.setEnabled(is_enable);
-    }
 
     public Usuario iniciarSesion(String user_login, String contraseña) {
         for (Usuario usuario : cuentas) {
 
             if (usuario.getNombre().equals(user_login) && usuario.getContraseña().equals(contraseña)) {
-                System.out.println("Existo! Login");
-                SocketManager.sendMessage("Bienvenido "+usuario.getNombre());   
+                SocketManager.sendMessage("Bienvenido " + usuario.getNombre());
                 return usuario;
             }
         }
         return null;
     }
 
-
     public static void main(String[] args) {
         try {
 
             SocketManager.connect(HOST, PORT); // conexion con el soket
+
             new Thread(() -> {
                 try {
                     String response;
@@ -291,15 +282,16 @@ public class ATM extends JFrame {
                         System.out.println("[Server]: " + response);
                     }
                 } catch (IOException e) {
-                    System.err.println("Error al leer mensajes del servidor: " + e.getMessage());
+                    System.err.println("Error al leer mensajes del servidoer: " + e.getMessage());
                     JOptionPane.showMessageDialog(null,
                             "Erro de comunicacion con el servidor " + HOST + ":" + PORT + "\n" + e);
                 }
+
             }).start();
-            
-            // instancias 
+            // instancias
             Banco banco = new Banco();
             banco.cargarCuentasDesdeArchivo("cuentas.txt"); // cuentas desde un archivo
+            SocketManager.sendMessage("Cliente concestado ");
             new LoginWindow(banco).setVisible(true);
 
         } catch (IOException e) {

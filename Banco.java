@@ -1,6 +1,13 @@
+/*
+ * Autor Jaosn nuñez
+ * 4-866-1408
+ * Programacion V
+ * Proyecto Finel 
+ * Banco con socket
+ * 10/12/2024
+ */
 import java.io.*;
 import java.util.ArrayList;
-
 import javax.swing.JOptionPane;
 
 public class Banco {

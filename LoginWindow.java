@@ -1,6 +1,14 @@
+/*
+ * Autor Jaosn nuñez
+ * 4-866-1408
+ * Programacion V
+ * Proyecto Finel 
+ * Banco con socket
+ * 10/12/2024
+ */
 
+import java.awt.Color;
 import java.awt.Font;
-
 import javax.swing.*;
 
 public class LoginWindow extends JFrame {
@@ -15,7 +23,7 @@ public class LoginWindow extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
         setLayout(null);
-        // getContentPane().setBackground(Color.gray);
+        getContentPane().setBackground(Color.red);
 
         JLabel lbusuario = new JLabel("Usuario");
         lbusuario.setBounds(70, 50, 150, 30);
@@ -51,10 +59,9 @@ public class LoginWindow extends JFrame {
             Usuario usuario = banco.iniciarSesion(numeroCuenta, contraseña);
 
             if (usuario != null) {
-
-    
                 new ATM(banco, usuario).setVisible(true);
                 this.dispose();
+                SocketManager.sendMessage("Bienvenido "+usuario.getNombre().toUpperCase());
                 
             } else {
                 JOptionPane.showMessageDialog(this, "Credenciales incorrectas.");
